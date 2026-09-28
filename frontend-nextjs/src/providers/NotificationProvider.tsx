@@ -128,7 +128,7 @@ export default function NotificationProvider({
         onClose={handleClose}
         anchorOrigin={{
           vertical: "top",
-          horizontal: "right",
+          horizontal: "center",
         }}
       >
         <Alert

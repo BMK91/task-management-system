@@ -108,10 +108,11 @@ const getTaskById = async (taskId: string) => {
 const updateTask = async (
   taskId: string,
   data: {
-    title?: string;
+    title: string;
     description?: string;
     status?: string;
     priority?: string;
+    dueDate?: string;
   },
 ) => {
   if (!Types.ObjectId.isValid(taskId)) {

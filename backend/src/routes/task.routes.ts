@@ -29,7 +29,7 @@ router.post(
 router.get("/", taskListValidator, authenticate, getAllTasks);
 router.get("/:id", taskIdValidator, authenticate, getTaskById);
 
-router.patch(
+router.put(
   "/:id",
   updateTaskValidator,
   validateRequest,

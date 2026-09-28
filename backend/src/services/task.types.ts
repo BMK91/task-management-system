@@ -30,3 +30,19 @@ export interface GetTasksParams {
   sortBy?: TaskSortBy;
   sortOrder?: SortOrder;
 }
+
+export interface TaskListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  sortBy?:
+    | "title"
+    | "status"
+    | "priority"
+    | "dueDate"
+    | "createdAt"
+    | "updatedAt";
+  sortOrder?: "asc" | "desc";
+}
