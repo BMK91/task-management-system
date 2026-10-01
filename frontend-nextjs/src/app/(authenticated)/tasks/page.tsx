@@ -4,6 +4,9 @@ import { useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
+import DownloadIcon from "@mui/icons-material/Download";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import TableViewIcon from "@mui/icons-material/TableView";
 import {
   Box,
   Button,
@@ -14,6 +17,8 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
+  Menu,
+  MenuItem,
   Stack,
   Typography,
 } from "@mui/material";
@@ -21,20 +26,34 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import TaskForm from "@/components/tasks/TaskForm";
 import TaskList from "@/components/tasks/TaskList";
+import { useExportTasks } from "@/hooks/useTasks";
 import { useNotification } from "@/providers/NotificationProvider";
-import { taskService } from "@/services/task.service";
+import {
+  TaskExportFormat,
+  TaskExportParams,
+  taskService,
+} from "@/services/task.service";
 import type { Task } from "@/types/task.types";
 import { getApiErrorMessage } from "@/utils/api-error";
+import { downloadBlob } from "@/utils/download";
 
 export default function TasksPage() {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useNotification();
+  const exportTasksMutation = useExportTasks();
 
+  const [hasTasks, setHasTasks] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(
+    null,
+  );
+  const [exportParams, setExportParams] = useState<TaskExportParams>({});
+
+  const exportMenuOpen = Boolean(exportAnchorEl);
 
   const handleTaskCreated = async () => {
     setCreateDialogOpen(false);
@@ -69,6 +88,40 @@ export default function TasksPage() {
     }
 
     deleteTaskMutation.mutate(selectedTask._id);
+  };
+
+  const handleExportMenuOpen = (event: React.MouseEvent<HTMLElement>): void => {
+    setExportAnchorEl(event.currentTarget);
+  };
+
+  const handleExportMenuClose = (): void => {
+    setExportAnchorEl(null);
+  };
+
+  const handleExport = async (format: TaskExportFormat): Promise<void> => {
+    handleExportMenuClose();
+
+    try {
+      const blob = await exportTasksMutation.mutateAsync({
+        format,
+        params: exportParams,
+      });
+
+      const extension = format === "pdf" ? "pdf" : "xlsx";
+
+      downloadBlob(
+        blob,
+        `tasks-${new Date().toISOString().slice(0, 10)}.${extension}`,
+      );
+
+      showSuccess(
+        `Tasks exported to ${format === "pdf" ? "PDF" : "Excel"} successfully`,
+      );
+    } catch {
+      showError(
+        `Failed to export tasks to ${format === "pdf" ? "PDF" : "Excel"}`,
+      );
+    }
   };
 
   const deleteTaskMutation = useMutation({
@@ -125,17 +178,64 @@ export default function TasksPage() {
             </Typography>
           </Box>
 
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setCreateDialogOpen(true)}
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1,
+              flexDirection: {
+                xs: "column",
+                sm: "row",
+              },
+            }}
           >
-            Create Task
-          </Button>
+            <Button
+              variant="outlined"
+              endIcon={<DownloadIcon />}
+              onClick={handleExportMenuOpen}
+              disabled={!hasTasks || exportTasksMutation.isPending}
+            >
+              {exportTasksMutation.isPending ? "Exporting..." : "Export"}
+            </Button>
+
+            <Menu
+              anchorEl={exportAnchorEl}
+              open={exportMenuOpen}
+              onClose={handleExportMenuClose}
+            >
+              <MenuItem
+                onClick={() => handleExport("pdf")}
+                disabled={exportTasksMutation.isPending}
+              >
+                <PictureAsPdfIcon fontSize="small" sx={{ mr: 1.5 }} />
+                PDF
+              </MenuItem>
+
+              <MenuItem
+                onClick={() => handleExport("excel")}
+                disabled={exportTasksMutation.isPending}
+              >
+                <TableViewIcon fontSize="small" sx={{ mr: 1.5 }} />
+                Excel
+              </MenuItem>
+            </Menu>
+
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              Create Task
+            </Button>
+          </Box>
         </Stack>
 
         {/* Task List */}
-        <TaskList onEdit={handleEdit} onDelete={handleDelete} />
+        <TaskList
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onQueryChange={setExportParams}
+          onTasksAvailable={setHasTasks}
+        />
       </Stack>
 
       {/* Create Task Dialog */}

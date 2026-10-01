@@ -28,7 +28,7 @@ import {
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 
-import { taskService } from "@/services/task.service";
+import { TaskExportParams, taskService } from "@/services/task.service";
 import type { Task, TaskPriority, TaskStatus } from "@/types/task.types";
 import {
   ArrowDownward,
@@ -39,16 +39,23 @@ import {
 
 const PAGE_SIZE = 10;
 
-type TaskSortField = "title" | "dueDate" | "createdAt";
+export type TaskSortField = "title" | "dueDate" | "createdAt";
 
 type SortOrder = "asc" | "desc";
 
 interface TaskListProps {
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
+  onQueryChange?: (params: TaskExportParams) => void;
+  onTasksAvailable?: (hasTasks: boolean) => void;
 }
 
-export default function TaskList({ onEdit, onDelete }: TaskListProps) {
+export default function TaskList({
+  onEdit,
+  onDelete,
+  onQueryChange,
+  onTasksAvailable,
+}: TaskListProps) {
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -67,6 +74,16 @@ export default function TaskList({ onEdit, onDelete }: TaskListProps) {
       window.clearTimeout(timer);
     };
   }, [searchInput]);
+
+  useEffect(() => {
+    onQueryChange?.({
+      search: search || undefined,
+      status: status || undefined,
+      priority: priority || undefined,
+      sortBy,
+      sortOrder,
+    });
+  }, [search, status, priority, sortBy, sortOrder, onQueryChange]);
 
   const handleSort = (field: TaskSortField) => {
     if (sortBy === field) {
@@ -107,6 +124,10 @@ export default function TaskList({ onEdit, onDelete }: TaskListProps) {
 
   const tasks = data?.data.tasks ?? [];
   const pagination = data?.data.pagination;
+
+  useEffect(() => {
+    onTasksAvailable?.((pagination?.total ?? 0) > 0);
+  }, [pagination?.total, onTasksAvailable]);
 
   return (
     <Stack spacing={2}>
