@@ -46,3 +46,13 @@ export interface TaskListParams {
     | "updatedAt";
   sortOrder?: "asc" | "desc";
 }
+
+export type TaskExportFormat = "excel" | "pdf";
+
+export interface TaskExportQuery {
+  search?: string;
+  status?: string;
+  priority?: string;
+  sortBy?: "title" | "dueDate" | "createdAt" | "updatedAt" | undefined;
+  sortOrder?: "asc" | "desc" | undefined;
+}

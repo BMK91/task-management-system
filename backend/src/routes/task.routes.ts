@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   createTask,
   deleteTask,
+  exportTasks,
   getAllTasks,
   getTaskById,
   updateTask,
@@ -27,6 +28,7 @@ router.post(
 );
 
 router.get("/", taskListValidator, authenticate, getAllTasks);
+router.get("/export", authenticate, exportTasks);
 router.get("/:id", taskIdValidator, authenticate, getTaskById);
 
 router.put(

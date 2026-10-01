@@ -1,9 +1,24 @@
-import { Types, type QueryFilter } from "mongoose";
+import { Types, type QueryFilter, type SortOrder } from "mongoose";
 
 import { HTTP_STATUS } from "@constants/http-status.js";
-import Task, { type ITask } from "@models/task.model.js";
+import Task, {
+  TASK_PRIORITIES,
+  TASK_STATUSES,
+  type ITask,
+  type TaskPriority,
+  type TaskStatus,
+} from "@models/task.model.js";
 import { ApiError } from "@utils/api-error.js";
-import type { CreateTaskRequest, GetTasksParams } from "./task.types.js";
+import {
+  generateTasksExcel,
+  generateTasksPdf,
+} from "@utils/task-export.util.js";
+import type {
+  CreateTaskRequest,
+  GetTasksParams,
+  TaskExportFormat,
+  TaskExportQuery,
+} from "./task.types.js";
 
 interface CreateTaskServiceInput extends CreateTaskRequest {
   createdBy: NonNullable<Express.Request["user"]>["id"];
@@ -162,4 +177,98 @@ const deleteTask = async (taskId: string): Promise<void> => {
   await Task.findByIdAndDelete(taskId);
 };
 
-export default { createTask, getAllTasks, getTaskById, updateTask, deleteTask };
+const exportTasks = async (
+  userId: string,
+  format: TaskExportFormat,
+  query: TaskExportQuery,
+): Promise<Buffer> => {
+  const filter: QueryFilter<ITask> = {
+    createdBy: userId,
+  };
+
+  /**
+   * Search by title and description.
+   */
+  if (query.search?.trim()) {
+    const search = query.search.trim();
+
+    filter.$or = [
+      {
+        title: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+      {
+        description: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+    ];
+  }
+
+  /**
+   * Filter by status.
+   */
+  if (query.status) {
+    if (
+      TASK_STATUSES.includes(query.status as (typeof TASK_STATUSES)[number])
+    ) {
+      filter.status = query.status as TaskStatus;
+    }
+  }
+
+  /**
+   * Filter by priority.
+   */
+  if (query.priority) {
+    if (
+      TASK_PRIORITIES.includes(
+        query.priority as (typeof TASK_PRIORITIES)[number],
+      )
+    ) {
+      filter.priority = query.priority as TaskPriority;
+    }
+  }
+
+  /**
+   * Sorting.
+   */
+  const allowedSortFields = [
+    "title",
+    "dueDate",
+    "createdAt",
+    "updatedAt",
+  ] as const;
+
+  const sortBy = allowedSortFields.includes(
+    query.sortBy as (typeof allowedSortFields)[number],
+  )
+    ? query.sortBy!
+    : "createdAt";
+
+  const sortOrder: SortOrder = query.sortOrder === "asc" ? 1 : -1;
+
+  const tasks = await Task.find(filter)
+    .select("title description status priority dueDate createdAt updatedAt")
+    .sort({
+      [sortBy]: sortOrder,
+    })
+    .lean();
+
+  if (format === "excel") {
+    return generateTasksExcel(tasks);
+  }
+
+  return generateTasksPdf(tasks);
+};
+
+export default {
+  createTask,
+  getAllTasks,
+  getTaskById,
+  updateTask,
+  deleteTask,
+  exportTasks,
+};

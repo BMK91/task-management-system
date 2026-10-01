@@ -3,7 +3,11 @@ import type { NextFunction, Request, Response } from "express";
 import { HTTP_STATUS } from "@constants/http-status.js";
 import type { TaskPriority, TaskStatus } from "@models/task.model.js";
 import taskService from "@services/task.service.js";
-import type { TaskSortBy } from "@services/task.types.js";
+import type {
+  TaskExportFormat,
+  TaskExportQuery,
+  TaskSortBy,
+} from "@services/task.types.js";
 import { sendError, sendSuccess } from "@utils/api-response.js";
 
 export const createTask = async (
@@ -142,6 +146,87 @@ export const deleteTask = async (
       success: true,
       message: "Task deleted successfully",
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportTasks = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: "Authentication required.",
+      });
+
+      return;
+    }
+
+    const format = req.query.format as TaskExportFormat;
+
+    if (format !== "excel" && format !== "pdf") {
+      res.status(400).json({
+        success: false,
+        message: "Export format must be either excel or pdf.",
+      });
+
+      return;
+    }
+
+    const query: TaskExportQuery = {};
+
+    if (typeof req.query.search === "string") {
+      query.search = req.query.search;
+    }
+
+    if (typeof req.query.status === "string") {
+      query.status = req.query.status;
+    }
+
+    if (typeof req.query.priority === "string") {
+      query.priority = req.query.priority;
+    }
+
+    if (typeof req.query.sortBy === "string") {
+      query.sortBy = req.query.sortBy as TaskExportQuery["sortBy"];
+    }
+
+    if (typeof req.query.sortOrder === "string") {
+      query.sortOrder = req.query.sortOrder as TaskExportQuery["sortOrder"];
+    }
+
+    const file = await taskService.exportTasks(userId, format, query);
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+
+    if (format === "excel") {
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      );
+
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="tasks-${timestamp}.xlsx"`,
+      );
+    } else {
+      res.setHeader("Content-Type", "application/pdf");
+
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="tasks-${timestamp}.pdf"`,
+      );
+    }
+
+    res.setHeader("Content-Length", file.length);
+
+    res.status(200).send(file);
   } catch (error) {
     next(error);
   }
