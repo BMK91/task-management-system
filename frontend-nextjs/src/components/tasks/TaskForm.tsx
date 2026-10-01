@@ -68,8 +68,6 @@ export default function TaskForm({ task, onSuccess }: TaskFormProps) {
     },
   });
 
-  console.log({ task });
-
   const form = useForm({
     defaultValues: {
       title: task?.title ?? "",
@@ -91,8 +89,6 @@ export default function TaskForm({ task, onSuccess }: TaskFormProps) {
         priority: value.priority,
         dueDate: value.dueDate,
       };
-
-      console.log({ value, payload });
 
       if (isEditMode && task) {
         await updateTaskMutation.mutateAsync({
