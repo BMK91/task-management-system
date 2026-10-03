@@ -1,26 +1,25 @@
 import { Router } from "express";
 
 import {
-  getUserProfile,
+  getRefreshToken,
   loginUser,
   logoutUser,
-  getRefreshToken,
   registerUser,
 } from "@controllers/auth.controller.js";
 import { authenticate } from "@middleware/auth.middleware.js";
-import { validateRequest } from "@middleware/error.middleware.js";
 import {
   loginValidator,
+  logoutValidator,
+  refreshTokenValidator,
   registerUserValidator,
 } from "@validators/auth.validator.js";
 
 const router = Router();
 
-router.post("/register", registerUserValidator, validateRequest, registerUser);
-router.post("/login", loginValidator, validateRequest, loginUser);
-router.post("/logout", authenticate, logoutUser);
+router.post("/register", registerUserValidator, registerUser);
+router.post("/login", loginValidator, loginUser);
+router.post("/logout", authenticate, logoutValidator, logoutUser);
 
-router.get("/me", authenticate, getUserProfile);
-router.get("/refresh-token", getRefreshToken);
+router.get("/refresh-token", refreshTokenValidator, getRefreshToken);
 
 export default router;

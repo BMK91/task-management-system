@@ -1,10 +1,10 @@
-import crypto from "crypto";
 import type { NextFunction, Request, Response } from "express";
 
 import { HTTP_STATUS } from "@constants/http-status.js";
 import RefreshToken from "@models/refresh-token.model.js";
 import authService from "@services/auth.service.js";
 import { sendError, sendSuccess } from "@utils/api-response.js";
+import { hashToken } from "@utils/common.js";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -58,53 +58,15 @@ export const registerUser = async (
   }
 };
 
-export const getUserProfile = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    if (!req.user) {
-      sendError(res, {
-        statusCode: HTTP_STATUS.UNAUTHORIZED,
-        message: "Unauthorised for this request.",
-        code: "UNAUTHORIZED",
-      });
-
-      return;
-    }
-
-    const user = await authService.getCurrentUser(req.user.id);
-
-    sendSuccess(res, {
-      statusCode: HTTP_STATUS.OK,
-      message: "User profile retrieved successfully",
-      data: user,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const logoutUser = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const refreshToken = req.headers["x-refresh-token"];
+    const refreshToken = req.headers["x-refresh-token"] as string;
 
-    if (!req.user || !refreshToken || typeof refreshToken !== "string") {
-      sendError(res, {
-        statusCode: HTTP_STATUS.UNAUTHORIZED,
-        message: "Unauthorised for this request.",
-        code: "UNAUTHORIZED",
-      });
-
-      return;
-    }
-
-    await authService.logoutUser(refreshToken, req.user.id);
+    await authService.logoutUser(refreshToken, req.user!.id);
 
     sendSuccess(res, {
       statusCode: HTTP_STATUS.OK,
@@ -121,21 +83,11 @@ export const getRefreshToken = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const token = req.headers["x-refresh-token"];
-
-    if (!token || typeof token !== "string") {
-      sendError(res, {
-        statusCode: HTTP_STATUS.UNAUTHORIZED,
-        message: "Authentication failed",
-        code: "UNAUTHORIZED",
-      });
-
-      return;
-    }
+    const token = req.headers["x-refresh-token"] as string;
 
     const { sub } = verifyRefreshToken(token);
 
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const tokenHash = hashToken(token);
 
     // Check whether refresh token was revoked during logout.
     const user = await RefreshToken.findOne({
@@ -157,10 +109,7 @@ export const getRefreshToken = async (
     const newRefreshToken = generateRefreshToken(sub);
 
     // Rotate refresh token.
-    const newTokenHash = crypto
-      .createHash("sha256")
-      .update(newRefreshToken)
-      .digest("hex");
+    const newTokenHash = hashToken(newRefreshToken);
 
     user.tokenHash = newTokenHash;
     await user.save();

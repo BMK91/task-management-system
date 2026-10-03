@@ -11,6 +11,10 @@ const {
   JWT_REFRESH_EXPIRES_IN = "7d",
   CORS_ORIGIN = "*",
   LOG_FORMAT = "dev",
+
+  ADMIN_NAME,
+  ADMIN_EMAIL,
+  ADMIN_PASSWORD,
 } = process.env;
 
 if (!MONGODB_URI) {
@@ -36,6 +40,10 @@ const config = {
   JWT_REFRESH_EXPIRES_IN,
   CORS_ORIGIN,
   LOG_FORMAT,
+
+  ADMIN_NAME,
+  ADMIN_EMAIL,
+  ADMIN_PASSWORD,
 };
 
 export default config;

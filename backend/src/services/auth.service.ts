@@ -1,9 +1,12 @@
-import crypto from "crypto";
+import ms, { type StringValue } from "ms";
 
+import config from "@config/config.js";
 import { HTTP_STATUS } from "@constants/http-status.js";
+import { USER_ROLES } from "@constants/user.roles.js";
 import RefreshToken from "@models/refresh-token.model.js";
 import User from "@models/user.model.js";
 import { ApiError } from "@utils/api-error.js";
+import { hashToken } from "@utils/common.js";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -11,7 +14,6 @@ import {
 } from "@utils/jwt.js";
 
 import type {
-  CurrentUserResponse,
   LoginUserInput,
   LoginUserResponse,
   RegisterUserInput,
@@ -47,16 +49,16 @@ const loginUser = async (
 
   const accessToken = generateAccessToken(userId);
   const refreshToken = generateRefreshToken(userId);
+  const tokenHash = hashToken(refreshToken);
 
-  const tokenHash = crypto
-    .createHash("sha256")
-    .update(refreshToken)
-    .digest("hex");
+  const refreshTokenExpiresInMs = ms(
+    config.JWT_REFRESH_EXPIRES_IN as StringValue,
+  );
 
   await RefreshToken.create({
     userId: user._id,
     tokenHash,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7d
+    expiresAt: new Date(Date.now() + refreshTokenExpiresInMs),
   });
 
   return {
@@ -92,33 +94,15 @@ const registerUser = async (
     name,
     email,
     password: payload.password,
+    role: USER_ROLES.USER,
   });
 
   return {
     id: user._id.toString(),
     name: user.name,
     email: user.email,
+    role: user.role,
     createdAt: user.createdAt,
-  };
-};
-
-const getCurrentUser = async (userId: string): Promise<CurrentUserResponse> => {
-  const user = await User.findById(userId).select("-password");
-
-  if (!user) {
-    throw new ApiError(
-      HTTP_STATUS.NOT_FOUND,
-      "USER_NOT_FOUND",
-      "User not found",
-    );
-  }
-
-  return {
-    id: user._id.toString(),
-    name: user.name,
-    email: user.email,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
   };
 };
 
@@ -132,10 +116,7 @@ const logoutUser = async (
     throw new Error("Invalid refresh token");
   }
 
-  const tokenHash = crypto
-    .createHash("sha256")
-    .update(refreshToken)
-    .digest("hex");
+  const tokenHash = hashToken(refreshToken);
 
   await RefreshToken.findOneAndUpdate(
     {
@@ -150,4 +131,4 @@ const logoutUser = async (
   );
 };
 
-export default { getCurrentUser, loginUser, logoutUser, registerUser };
+export default { loginUser, logoutUser, registerUser };

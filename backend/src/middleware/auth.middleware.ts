@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import { HTTP_STATUS } from "@constants/http-status.js";
 import RefreshToken from "@models/refresh-token.model.js";
+import User from "@models/user.model.js";
 import { sendError } from "@utils/api-response.js";
 import { verifyAccessToken } from "@utils/jwt.js";
 
@@ -49,8 +50,23 @@ export const authenticate = async (
       throw new Error();
     }
 
+    const user = await User.findById(payload.sub)
+      .select("_id role isActive")
+      .lean();
+
+    if (!user || !user.isActive) {
+      sendError(res, {
+        statusCode: HTTP_STATUS.UNAUTHORIZED,
+        message: "Authentication failed",
+        code: "UNAUTHORIZED",
+      });
+
+      return;
+    }
+
     req.user = {
-      id: payload.sub,
+      id: user._id.toString(),
+      role: user.role,
     };
 
     next();

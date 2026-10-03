@@ -1,10 +1,14 @@
 import bcrypt from "bcrypt";
 import mongoose, { type HydratedDocument, type Model } from "mongoose";
 
+import { USER_ROLES, type UserRole } from "@constants/user.roles.js";
+
 export interface IUser {
   name: string;
   email: string;
   password: string;
+  role: UserRole;
+  isActive: Boolean;
   createdAt: Date;
   updatedAt: Date;
 
@@ -41,6 +45,16 @@ const userSchema = new mongoose.Schema<IUser>(
       required: [true, "Password is required"],
       minlength: [8, "Password must be at least 8 characters"],
       select: false,
+    },
+    role: {
+      type: String,
+      enum: Object.values(USER_ROLES),
+      default: USER_ROLES.USER,
+      required: true,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
   { timestamps: true, versionKey: false },

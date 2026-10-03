@@ -1,6 +1,8 @@
-import { body } from "express-validator";
+import { body, header } from "express-validator";
 
-export const loginValidator = [
+import { validate } from "@utils/validate.js";
+
+export const loginValidator = validate([
   body("email")
     .trim()
     .notEmpty()
@@ -10,9 +12,9 @@ export const loginValidator = [
     .normalizeEmail(),
 
   body("password").notEmpty().withMessage("Password is required"),
-];
+]);
 
-export const registerUserValidator = [
+export const registerUserValidator = validate([
   body("name")
     .trim()
     .notEmpty()
@@ -39,4 +41,12 @@ export const registerUserValidator = [
     .withMessage("Password must contain at least one lowercase letter")
     .matches(/[0-9]/)
     .withMessage("Password must contain at least one number"),
-];
+]);
+
+export const logoutValidator = validate([
+  header("x-refresh-token").notEmpty().withMessage("Refresh token is required"),
+]);
+
+export const refreshTokenValidator = validate([
+  header("x-refresh-token").notEmpty().withMessage("Refresh token is required"),
+]);

@@ -1,14 +1,15 @@
 import { body, param, query } from "express-validator";
 
 import { TASK_PRIORITIES, TASK_STATUSES } from "@models/task.model.js";
-import { TASK_SORT_BY } from "@services/task.types.js";
+import { TASK_EXPORT_FORMATS, TASK_SORT_BY } from "@services/task.types.js";
+import { validate } from "@utils/validate.js";
 import { SORT_ORDER } from "../types/common.types.js";
 
 /**
 
 * Validation rules for creating a task.
   */
-export const createTaskValidator = [
+export const createTaskValidator = validate([
   body("title")
     .trim()
     .notEmpty()
@@ -38,13 +39,13 @@ export const createTaskValidator = [
     .optional({ checkFalsy: true })
     .isISO8601({ strict: true })
     .withMessage("Due date must be a valid ISO 8601 date."),
-];
+]);
 
 /**
 
 * Validation rules for updating a task.
   */
-export const updateTaskValidator = [
+export const updateTaskValidator = validate([
   param("id")
     .trim()
     .notEmpty()
@@ -82,26 +83,26 @@ export const updateTaskValidator = [
     .optional({ checkFalsy: true })
     .isISO8601({ strict: true })
     .withMessage("Due date must be a valid ISO 8601 date."),
-];
+]);
 
 /**
 
 * Validation rules for getting a task by ID.
   */
-export const taskIdValidator = [
+export const taskIdValidator = validate([
   param("id")
     .trim()
     .notEmpty()
     .withMessage("Task ID is required.")
     .isMongoId()
     .withMessage("Invalid task ID."),
-];
+]);
 
 /**
 
 * Validation rules for task listing/filtering.
   */
-export const taskListValidator = [
+export const taskListValidator = validate([
   query("page")
     .optional()
     .isInt({ min: 1 })
@@ -146,4 +147,30 @@ export const taskListValidator = [
     .toLowerCase()
     .isIn(SORT_ORDER)
     .withMessage(`Sort order must be ${SORT_ORDER.join(" or ")}`),
-];
+]);
+
+export const exportTasksValidator = validate([
+  query("format")
+    .notEmpty()
+    .withMessage("Export format is required")
+    .bail()
+    .isIn(TASK_EXPORT_FORMATS)
+    .withMessage("Export format must be either excel or pdf"),
+
+  query("search")
+    .optional()
+    .isString()
+    .withMessage("Search must be a string")
+    .trim(),
+
+  query("status").optional().isString().withMessage("Invalid task status"),
+
+  query("priority").optional().isString().withMessage("Invalid task priority"),
+
+  query("sortBy").optional().isString().withMessage("Invalid sort field"),
+
+  query("sortOrder")
+    .optional()
+    .isIn(SORT_ORDER)
+    .withMessage("Sort order must be asc or desc"),
+]);

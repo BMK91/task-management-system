@@ -1,5 +1,6 @@
 import { Router } from "express";
 
+import { USER_ROLES } from "@constants/user.roles.js";
 import {
   createTask,
   deleteTask,
@@ -9,9 +10,10 @@ import {
   updateTask,
 } from "@controllers/task.controller.js";
 import { authenticate } from "@middleware/auth.middleware.js";
-import { validateRequest } from "@middleware/error.middleware.js";
+import { requireRole } from "@middleware/role.middleware.js";
 import {
   createTaskValidator,
+  exportTasksValidator,
   taskIdValidator,
   taskListValidator,
   updateTaskValidator,
@@ -19,26 +21,26 @@ import {
 
 const router = Router();
 
+router.use(authenticate);
+
 router.post(
   "/",
+  requireRole(USER_ROLES.USER, USER_ROLES.ADMIN),
   createTaskValidator,
-  validateRequest,
-  authenticate,
   createTask,
 );
 
-router.get("/", taskListValidator, authenticate, getAllTasks);
-router.get("/export", authenticate, exportTasks);
-router.get("/:id", taskIdValidator, authenticate, getTaskById);
-
-router.put(
-  "/:id",
-  updateTaskValidator,
-  validateRequest,
-  authenticate,
-  updateTask,
+router.get(
+  "/",
+  requireRole(USER_ROLES.USER, USER_ROLES.ADMIN),
+  taskListValidator,
+  getAllTasks,
 );
+router.get("/export", exportTasksValidator, exportTasks);
+router.get("/:id", taskIdValidator, getTaskById);
 
-router.delete("/:id", authenticate, deleteTask);
+router.put("/:id", updateTaskValidator, updateTask);
+
+router.delete("/:id", taskIdValidator, deleteTask);
 
 export default router;

@@ -47,12 +47,14 @@ export interface TaskListParams {
   sortOrder?: "asc" | "desc";
 }
 
-export type TaskExportFormat = "excel" | "pdf";
+export const TASK_EXPORT_FORMATS = ["pdf", "excel"] as const;
+
+export type TaskExportFormat = (typeof TASK_EXPORT_FORMATS)[number];
 
 export interface TaskExportQuery {
   search?: string;
-  status?: string;
-  priority?: string;
-  sortBy?: "title" | "dueDate" | "createdAt" | "updatedAt" | undefined;
-  sortOrder?: "asc" | "desc" | undefined;
+  status?: TaskStatus | undefined;
+  priority?: TaskPriority | undefined;
+  sortBy?: TaskSortBy | undefined;
+  sortOrder?: SortOrder | undefined;
 }

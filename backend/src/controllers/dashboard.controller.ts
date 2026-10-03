@@ -1,6 +1,8 @@
+import type { NextFunction, Request, Response } from "express";
+
 import { HTTP_STATUS } from "@constants/http-status.js";
 import dashboardService from "@services/dashboard.service.js";
-import type { NextFunction, Request, Response } from "express";
+import { sendSuccess } from "@utils/api-response.js";
 
 export const getDashboard = async (
   _req: Request,
@@ -10,8 +12,8 @@ export const getDashboard = async (
   try {
     const statistics = await dashboardService.getDashboardStatistics();
 
-    res.status(HTTP_STATUS.OK).json({
-      success: true,
+    sendSuccess(res, {
+      statusCode: HTTP_STATUS.OK,
       message: "Dashboard statistics fetched successfully",
       data: statistics,
     });

@@ -1,5 +1,6 @@
-import config from "@config/config.js";
 import mongoose from "mongoose";
+
+import config from "@config/config.js";
 
 const connectDB = async (): Promise<typeof mongoose> => {
   try {
@@ -9,7 +10,9 @@ const connectDB = async (): Promise<typeof mongoose> => {
       throw new Error("DB URI is not defined");
     }
 
-    const connection = await mongoose.connect(mongoUri);
+    const connection = await mongoose.connect(mongoUri, {
+      autoIndex: true,
+    });
 
     // console.log(`DB connected: ${connection.connection.host}`);
     console.log(`DB connected successfully!`);

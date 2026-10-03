@@ -8,7 +8,7 @@ import type {
   TaskExportQuery,
   TaskSortBy,
 } from "@services/task.types.js";
-import { sendError, sendSuccess } from "@utils/api-response.js";
+import { sendSuccess } from "@utils/api-response.js";
 
 export const createTask = async (
   req: Request,
@@ -16,14 +16,9 @@ export const createTask = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    req.body.dueDate =
-      req.body.dueDate && !Number.isNaN(Date.parse(req.body.dueDate))
-        ? req.body.dueDate
-        : undefined;
-
     const task = await taskService.createTask({
       ...req.body,
-      createdBy: req.user?.id,
+      createdBy: req.user!.id,
     });
 
     sendSuccess(res, {
@@ -42,16 +37,6 @@ export const getAllTasks = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    if (!req.user) {
-      sendError(res, {
-        statusCode: HTTP_STATUS.UNAUTHORIZED,
-        message: "Unauthorised for this request.",
-        code: "UNAUTHORIZED",
-      });
-
-      return;
-    }
-
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
 
@@ -70,7 +55,7 @@ export const getAllTasks = async (
     const sortOrder = req.query.sortOrder === "asc" ? "asc" : "desc";
 
     const result = await taskService.getAllTasks({
-      createdBy: req.user.id,
+      createdBy: req.user!.id,
       page,
       limit,
       ...(search !== undefined && { search }),
@@ -124,9 +109,9 @@ export const updateTask = async (
   try {
     const task = await taskService.updateTask(String(req.params.id), req.body);
 
-    res.status(HTTP_STATUS.OK).json({
-      success: true,
-      message: "Task updated successfully",
+    sendSuccess(res, {
+      statusCode: HTTP_STATUS.OK,
+      message: "Tasks updated successfully",
       data: task,
     });
   } catch (error) {
@@ -142,9 +127,9 @@ export const deleteTask = async (
   try {
     await taskService.deleteTask(String(req.params.id));
 
-    res.status(HTTP_STATUS.OK).json({
-      success: true,
-      message: "Task deleted successfully",
+    sendSuccess(res, {
+      statusCode: HTTP_STATUS.OK,
+      message: "Tasks deleted successfully",
     });
   } catch (error) {
     next(error);
@@ -157,27 +142,8 @@ export const exportTasks = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const userId = req.user?.id;
-
-    if (!userId) {
-      res.status(401).json({
-        success: false,
-        message: "Authentication required.",
-      });
-
-      return;
-    }
-
+    const userId = req.user!.id;
     const format = req.query.format as TaskExportFormat;
-
-    if (format !== "excel" && format !== "pdf") {
-      res.status(400).json({
-        success: false,
-        message: "Export format must be either excel or pdf.",
-      });
-
-      return;
-    }
 
     const query: TaskExportQuery = {};
 
@@ -186,11 +152,11 @@ export const exportTasks = async (
     }
 
     if (typeof req.query.status === "string") {
-      query.status = req.query.status;
+      query.status = req.query.status as TaskExportQuery["status"];
     }
 
     if (typeof req.query.priority === "string") {
-      query.priority = req.query.priority;
+      query.priority = req.query.priority as TaskExportQuery["priority"];
     }
 
     if (typeof req.query.sortBy === "string") {
@@ -204,25 +170,19 @@ export const exportTasks = async (
     const file = await taskService.exportTasks(userId, format, query);
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const isExcel = format === "excel";
 
-    if (format === "excel") {
-      res.setHeader(
-        "Content-Type",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      );
+    res.setHeader(
+      "Content-Type",
+      isExcel
+        ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        : "application/pdf",
+    );
 
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="tasks-${timestamp}.xlsx"`,
-      );
-    } else {
-      res.setHeader("Content-Type", "application/pdf");
-
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="tasks-${timestamp}.pdf"`,
-      );
-    }
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="tasks-${timestamp}.${isExcel ? "xlsx" : "pdf"}"`,
+    );
 
     res.setHeader("Content-Length", file.length);
 
