@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import { isValidObjectId } from "mongoose";
 
 import { HTTP_STATUS } from "@constants/http-status.js";
@@ -101,4 +102,43 @@ const getCurrentUser = async (userId: string) => {
   };
 };
 
-export default { updateProfile, getCurrentUser };
+const changePassword = async (
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> => {
+  const user = await User.findById(userId).select("+password");
+
+  if (!user) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      "USER_NOT_FOUND",
+      "User not found",
+    );
+  }
+
+  const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+
+  if (!isPasswordValid) {
+    throw new ApiError(
+      HTTP_STATUS.UNAUTHORIZED,
+      "INVALID_PASSWORD",
+      "Current password is incorrect",
+    );
+  }
+
+  const isSamePassword = await bcrypt.compare(newPassword, user.password);
+
+  if (isSamePassword) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      "SAME_PASSWORD",
+      "New password must be different from the current password",
+    );
+  }
+
+  user.password = newPassword;
+  await user.save();
+};
+
+export default { updateProfile, getCurrentUser, changePassword };

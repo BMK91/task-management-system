@@ -61,3 +61,26 @@ export const updateProfile = async (
     next(error);
   }
 };
+
+export const changePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    await userService.changePassword(
+      req.user!.id,
+      currentPassword,
+      newPassword,
+    );
+
+    sendSuccess(res, {
+      statusCode: HTTP_STATUS.OK,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};

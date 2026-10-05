@@ -1,9 +1,15 @@
 import { Router } from "express";
 
+import {
+  changePassword,
+  getUserProfile,
+  updateProfile,
+} from "@controllers/user.controller.js";
 import { authenticate } from "@middleware/auth.middleware.js";
-import { updateProfileValidator } from "@validators/user.validator.js";
-
-import { getUserProfile, updateProfile } from "@controllers/user.controller.js";
+import {
+  changePasswordValidator,
+  updateProfileValidator,
+} from "@validators/user.validator.js";
 
 const router = Router();
 
@@ -14,11 +20,7 @@ router.get("/me", getUserProfile);
 // router.patch("/me", updateProfile);
 // router.patch("/me/password", changePassword);
 
-router.patch(
-  "/profile",
-  authenticate,
-  updateProfileValidator,
-  updateProfile,
-);
+router.patch("/profile", authenticate, updateProfileValidator, updateProfile);
+router.patch("/change-password", changePasswordValidator, changePassword);
 
 export default router;
