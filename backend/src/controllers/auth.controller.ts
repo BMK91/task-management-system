@@ -26,7 +26,7 @@ export const loginUser = async (
 
     sendSuccess(res, {
       statusCode: HTTP_STATUS.OK,
-      message: "Login successful",
+      message: "Logged-in successfully",
       data: result,
     });
   } catch (error) {

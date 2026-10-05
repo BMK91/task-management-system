@@ -16,11 +16,11 @@ const router = Router();
 // Both USER and ADMIN can access their own profile
 router.use(authenticate);
 
-router.get("/me", getUserProfile);
+router.get("/profile", getUserProfile);
 // router.patch("/me", updateProfile);
 // router.patch("/me/password", changePassword);
 
-router.patch("/profile", authenticate, updateProfileValidator, updateProfile);
-router.patch("/change-password", changePasswordValidator, changePassword);
+router.put("/profile", updateProfileValidator, updateProfile);
+router.put("/change-password", changePasswordValidator, changePassword);
 
 export default router;

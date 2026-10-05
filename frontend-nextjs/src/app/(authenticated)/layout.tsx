@@ -19,9 +19,17 @@ export default function AuthenticatedLayout({
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
-    const storedUser = authStorage.getUser();
+    const handleUserUpdated = () => {
+      setUser(authStorage.getUser());
+    };
 
-    setUser(storedUser);
+    handleUserUpdated();
+
+    window.addEventListener("user-updated", handleUserUpdated);
+
+    return () => {
+      window.removeEventListener("user-updated", handleUserUpdated);
+    };
   }, []);
 
   return (

@@ -10,10 +10,13 @@ export default function AuthPage() {
         sx={{
           minHeight: "100vh",
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-start",
           justifyContent: "center",
+          pt: {
+            xs: 4,
+            sm: 8,
+          },
           px: 2,
-          py: 4,
           backgroundColor: "background.default",
         }}
       >

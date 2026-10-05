@@ -29,30 +29,31 @@ const updateProfile = async (userId: string, payload: UpdateProfileInput) => {
     );
   }
 
-  const { name, email } = payload;
+  // const { name, email } = payload;
+  const { name } = payload;
 
-  if (email && email !== user.email) {
-    const existingUser = await User.findOne({
-      email,
-      _id: { $ne: userId },
-    });
+  // if (email && email !== user.email) {
+  //   const existingUser = await User.findOne({
+  //     email,
+  //     _id: { $ne: userId },
+  //   });
 
-    if (existingUser) {
-      throw new ApiError(
-        HTTP_STATUS.CONFLICT,
-        "EMAIL_ALREADY_EXISTS",
-        "Email already exists",
-      );
-    }
-  }
+  //   if (existingUser) {
+  //     throw new ApiError(
+  //       HTTP_STATUS.CONFLICT,
+  //       "EMAIL_ALREADY_EXISTS",
+  //       "Email already exists",
+  //     );
+  //   }
+  // }
 
   if (name !== undefined) {
     user.name = name;
   }
 
-  if (email !== undefined) {
-    user.email = email;
-  }
+  // if (email !== undefined) {
+  //   user.email = email;
+  // }
 
   try {
     await user.save();
@@ -77,7 +78,8 @@ const updateProfile = async (userId: string, payload: UpdateProfileInput) => {
     id: user._id,
     name: user.name,
     email: user.email,
-    role: user.role,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   };
 };
 
@@ -121,7 +123,7 @@ const changePassword = async (
 
   if (!isPasswordValid) {
     throw new ApiError(
-      HTTP_STATUS.UNAUTHORIZED,
+      HTTP_STATUS.BAD_REQUEST,
       "INVALID_PASSWORD",
       "Current password is incorrect",
     );

@@ -36,7 +36,14 @@ export const createTaskValidator = validate([
     .withMessage(`Priority must be ${TASK_PRIORITIES.join(", ")}`),
 
   body("dueDate")
-    .optional({ checkFalsy: true })
+    .customSanitizer((value) => {
+      if (value.trim() === "" || value === null || value === undefined) {
+        return undefined;
+      }
+
+      return value;
+    })
+    .optional()
     .isISO8601({ strict: true })
     .withMessage("Due date must be a valid ISO 8601 date."),
 ]);

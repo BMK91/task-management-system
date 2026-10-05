@@ -1,5 +1,7 @@
 "use client";
 
+import { RefObject } from "react";
+
 import { Box, Button, CircularProgress, Stack, TextField } from "@mui/material";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
@@ -11,9 +13,13 @@ import { getApiErrorMessage } from "@/utils/api-error";
 
 interface RegisterFormProps {
   onSuccess: () => void;
+  firstFieldRef: RefObject<HTMLInputElement | null>;
 }
 
-export default function RegisterForm({ onSuccess }: RegisterFormProps) {
+export default function RegisterForm({
+  onSuccess,
+  firstFieldRef,
+}: RegisterFormProps) {
   const { showSuccess, showError } = useNotification();
 
   const registerMutation = useMutation({
@@ -70,6 +76,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
           children={(field) => (
             <TextField
               fullWidth
+              inputRef={firstFieldRef}
               label="Name"
               value={field.state.value}
               onBlur={field.handleBlur}

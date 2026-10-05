@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Box, Paper, Tab, Tabs, Typography } from "@mui/material";
 
@@ -14,6 +14,21 @@ export default function AuthTabs() {
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<AuthTab>("login");
+
+  const loginFirstFieldRef = useRef<HTMLInputElement>(null);
+  const registerFirstFieldRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (activeTab === "login") {
+        loginFirstFieldRef.current?.focus();
+      } else {
+        registerFirstFieldRef.current?.focus();
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [activeTab]);
 
   const handleSuccess = () => {
     router.push("/dashboard");
@@ -54,10 +69,18 @@ export default function AuthTabs() {
       </Tabs>
 
       <Box>
-        {activeTab === "login" && <LoginForm onSuccess={handleSuccess} />}
+        {activeTab === "login" && (
+          <LoginForm
+            onSuccess={handleSuccess}
+            firstFieldRef={loginFirstFieldRef}
+          />
+        )}
 
         {activeTab === "register" && (
-          <RegisterForm onSuccess={() => setActiveTab("login")} />
+          <RegisterForm
+            onSuccess={() => setActiveTab("login")}
+            firstFieldRef={registerFirstFieldRef}
+          />
         )}
       </Box>
     </Paper>

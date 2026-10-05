@@ -1,5 +1,7 @@
 "use client";
 
+import { RefObject } from "react";
+
 import { Box, Button, CircularProgress, Stack, TextField } from "@mui/material";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
@@ -12,9 +14,13 @@ import { authStorage } from "@/utils/auth-storage";
 
 interface LoginFormProps {
   onSuccess: () => void;
+  firstFieldRef: RefObject<HTMLInputElement | null>;
 }
 
-export default function LoginForm({ onSuccess }: LoginFormProps) {
+export default function LoginForm({
+  onSuccess,
+  firstFieldRef,
+}: LoginFormProps) {
   const { showSuccess, showError } = useNotification();
 
   const loginMutation = useMutation({
@@ -26,7 +32,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       authStorage.setTokens(data.tokens.accessToken, data.tokens.refreshToken);
       authStorage.setUser(data.user);
 
-      showSuccess("Login successful");
+      showSuccess("Logged-in successfully");
       onSuccess();
     },
 
@@ -70,6 +76,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           children={(field) => (
             <TextField
               fullWidth
+              inputRef={firstFieldRef}
               label="Email"
               type="email"
               value={field.state.value}
