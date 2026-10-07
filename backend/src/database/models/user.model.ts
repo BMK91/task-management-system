@@ -7,6 +7,7 @@ export interface IUser {
   name: string;
   email: string;
   password: string;
+  profilePhoto?: string;
   role: UserRole;
   isActive: Boolean;
   createdAt: Date;
@@ -45,6 +46,10 @@ const userSchema = new mongoose.Schema<IUser>(
       required: [true, "Password is required"],
       minlength: [8, "Password must be at least 8 characters"],
       select: false,
+    },
+    profilePhoto: {
+      type: String,
+      default: null,
     },
     role: {
       type: String,

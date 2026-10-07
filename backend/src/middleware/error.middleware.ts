@@ -1,17 +1,18 @@
 import type {
   ErrorRequestHandler,
-  Request,
-  Response,
   NextFunction,
+  Request,
   RequestHandler,
+  Response,
 } from "express";
 import { validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
+import multer from "multer";
 
+import logger from "@config/logger.js";
+import { HTTP_STATUS } from "@constants/http-status.js";
 import { ApiError } from "@utils/api-error.js";
 import { sendError } from "@utils/api-response.js";
-import { HTTP_STATUS } from "@constants/http-status.js";
-import logger from "@config/logger.js";
 
 import type { AppError } from "./error.types.js";
 
@@ -44,6 +45,15 @@ export const validateRequest: RequestHandler = (req, res, next) => {
   }
 
   next();
+};
+
+const isMongoDuplicateKeyError = (error: unknown): error is { code: 11000 } => {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === 11000
+  );
 };
 
 export const errorHandler: ErrorRequestHandler = (
@@ -91,9 +101,52 @@ export const errorHandler: ErrorRequestHandler = (
   }
 
   /**
+   * Multer file upload errors
+   */
+  if (error instanceof multer.MulterError) {
+    if (error.code === "LIMIT_FILE_SIZE") {
+      sendError(res, {
+        statusCode: HTTP_STATUS.BAD_REQUEST,
+        message: "Profile photo must not exceed 2 MB",
+        code: "LIMIT_FILE_SIZE",
+      });
+
+      return;
+    }
+
+    if (error.code === "LIMIT_UNEXPECTED_FILE") {
+      sendError(res, {
+        statusCode: HTTP_STATUS.BAD_REQUEST,
+        message: `Unexpected file field: ${error.field}`,
+        code: "LIMIT_UNEXPECTED_FILE",
+      });
+
+      return;
+    }
+
+    if (error.code === "LIMIT_FILE_COUNT") {
+      sendError(res, {
+        statusCode: HTTP_STATUS.BAD_REQUEST,
+        message: "Only one profile photo can be uploaded",
+        code: "LIMIT_FILE_COUNT",
+      });
+
+      return;
+    }
+
+    sendError(res, {
+      statusCode: HTTP_STATUS.BAD_REQUEST,
+      message: "Invalid file upload",
+      code: error.code,
+    });
+
+    return;
+  }
+
+  /**
    * MongoDB duplicate key error
    */
-  if (error?.code === 11000) {
+  if (isMongoDuplicateKeyError(error)) {
     sendError(res, {
       statusCode: HTTP_STATUS.CONFLICT,
       message: "Resource already exists",

@@ -84,3 +84,46 @@ export const changePassword = async (
     next(error);
   }
 };
+
+export const uploadProfilePhoto = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      sendError(res, {
+        statusCode: HTTP_STATUS.UNAUTHORIZED,
+        message: "Authentication failed",
+        code: "UNAUTHORIZED",
+      });
+
+      return;
+    }
+
+    if (!req.file) {
+      sendError(res, {
+        statusCode: HTTP_STATUS.BAD_REQUEST,
+        message: "Profile photo is required",
+        code: "PROFILE_PHOTO_REQUIRED",
+      });
+
+      return;
+    }
+
+    const profilePhoto = await userService.updateProfilePhoto(
+      req.user.id,
+      req.file.filename,
+    );
+
+    sendSuccess(res, {
+      statusCode: HTTP_STATUS.OK,
+      message: "Profile photo uploaded successfully",
+      data: {
+        profilePhoto,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

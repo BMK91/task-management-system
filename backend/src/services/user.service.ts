@@ -1,5 +1,7 @@
 import bcrypt from "bcrypt";
+import fs from "fs/promises";
 import { isValidObjectId } from "mongoose";
+import path from "path";
 
 import { HTTP_STATUS } from "@constants/http-status.js";
 import User from "@models/user.model.js";
@@ -143,4 +145,61 @@ const changePassword = async (
   await user.save();
 };
 
-export default { updateProfile, getCurrentUser, changePassword };
+const updateProfilePhoto = async (
+  userId: string,
+  filename: string,
+): Promise<string> => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      "USER_NOT_FOUND",
+      "User not found",
+    );
+  }
+
+  const profilePhotoPath = path.join(
+    "uploads",
+    "profile-photos",
+    userId,
+    filename,
+  );
+
+  /*
+   * Delete the previous profile photo.
+   */
+  if (user.profilePhoto) {
+    const previousPhotoPath = path.join(process.cwd(), user.profilePhoto);
+
+    try {
+      await fs.unlink(previousPhotoPath);
+    } catch (error: unknown) {
+      /*
+       * Ignore the error when the old file
+       * does not exist.
+       */
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code !== "ENOENT"
+      ) {
+        throw error;
+      }
+    }
+  }
+
+  user.profilePhoto = profilePhotoPath;
+
+  await user.save();
+
+  return profilePhotoPath;
+};
+
+export default {
+  updateProfile,
+  getCurrentUser,
+  changePassword,
+  updateProfilePhoto,
+};
