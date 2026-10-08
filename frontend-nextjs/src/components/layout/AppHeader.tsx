@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { AccountCircle, ExpandMore, Logout } from "@mui/icons-material";
+import { ExpandMore, Logout } from "@mui/icons-material";
 import {
   AppBar,
+  Avatar,
   Box,
   Button,
   Container,
@@ -17,8 +18,10 @@ import {
   Typography,
 } from "@mui/material";
 
+import { useProfile } from "@/hooks/profile/useProfile";
 import { useNotification } from "@/providers/NotificationProvider";
 import { authStorage } from "@/utils/auth-storage";
+import { getProfilePhotoUrl } from "@/utils/profile-photo";
 
 import ThemeModeSelector from "./ThemeModeSelector";
 
@@ -31,6 +34,7 @@ export default function AppHeader({ userName }: AppHeaderProps) {
   const router = useRouter();
 
   const { showSuccess } = useNotification();
+  const { data: profile } = useProfile();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -130,9 +134,39 @@ export default function AppHeader({ userName }: AppHeaderProps) {
               sx={{
                 textTransform: "none",
                 fontWeight: 500,
+                minWidth: "auto",
+                px: 1,
+                gap: 1,
+                borderRadius: 2,
+                "&:hover": {
+                  backgroundColor: "action.hover",
+                },
               }}
             >
-              {userName}
+              <Avatar
+                src={getProfilePhotoUrl(profile?.profilePhoto)}
+                alt={profile?.name ?? "User"}
+                sx={{
+                  width: 32,
+                  height: 32,
+                  fontSize: "0.875rem",
+                }}
+              >
+                {!profile?.profilePhoto &&
+                  profile?.name?.charAt(0).toUpperCase()}
+              </Avatar>
+
+              <Box
+                component="span"
+                sx={{
+                  maxWidth: 140,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {userName}
+              </Box>
             </Button>
 
             <Menu
@@ -158,7 +192,19 @@ export default function AppHeader({ userName }: AppHeaderProps) {
             >
               {/* Profile */}
               <MenuItem onClick={handleProfile}>
-                <AccountCircle fontSize="small" sx={{ mr: 1.5 }} />
+                <Avatar
+                  src={getProfilePhotoUrl(profile?.profilePhoto)}
+                  alt={profile?.name ?? "User"}
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    mr: 1.5,
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  {!profile?.profilePhoto &&
+                    profile?.name?.charAt(0).toUpperCase()}
+                </Avatar>
 
                 <Typography>Profile</Typography>
               </MenuItem>

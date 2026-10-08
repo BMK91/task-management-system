@@ -101,6 +101,7 @@ const getCurrentUser = async (userId: string) => {
     name: user.name,
     email: user.email,
     role: user.role,
+    profilePhoto: user.profilePhoto,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

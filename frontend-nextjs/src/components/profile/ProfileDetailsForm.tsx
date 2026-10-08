@@ -7,7 +7,8 @@ import { useForm } from "@tanstack/react-form";
 
 import { useUpdateProfile } from "@/hooks/profile/useProfile";
 import { Profile } from "@/types/profile.types";
-import axios from "axios";
+
+import ProfilePhotoCropper from "./ProfilePhotoCropper";
 
 interface ProfileDetailsFormProps {
   profile: Profile;
@@ -40,21 +41,6 @@ export default function ProfileDetailsForm({
   useEffect(() => {
     form.setFieldValue("name", profile.name);
   }, [profile.name, form]);
-
-  const getChangePasswordError = () => {
-    if (!updateProfile.error) {
-      return null;
-    }
-
-    if (axios.isAxiosError(updateProfile.error)) {
-      return (
-        updateProfile.error.response?.data?.message ??
-        "Unable to update profile"
-      );
-    }
-
-    return "Unable to update profile";
-  };
 
   return (
     <Box
@@ -99,6 +85,11 @@ export default function ProfileDetailsForm({
         </Box>
       </Box>
 
+      <ProfilePhotoCropper
+        profilePhoto={profile.profilePhoto}
+        name={profile.name}
+      />
+
       <form.Field
         name="name"
         validators={{
@@ -129,7 +120,6 @@ export default function ProfileDetailsForm({
           />
         )}
       </form.Field>
-
       <TextField
         label="Email"
         value={profile.email}
@@ -141,7 +131,6 @@ export default function ProfileDetailsForm({
         }}
         helperText="Email address cannot be changed"
       />
-
       <Box
         sx={{
           display: "flex",

@@ -271,7 +271,7 @@ export default function TasksPage() {
           </Stack>
         </DialogTitle>
 
-        <DialogContent sx={{ pb: 3 }}>
+        <DialogContent sx={{ pt: 3, pb: 3, overflow: "visible" }}>
           <TaskForm onSuccess={handleTaskCreated} />
         </DialogContent>
       </Dialog>

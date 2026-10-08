@@ -5,7 +5,7 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 
 import { useNotification } from "@/providers/NotificationProvider";
-import { changePassword } from "@/services/profile.service";
+import profileService from "@/services/profile.service";
 import { getApiErrorMessage } from "@/utils/api-error";
 
 interface ChangePasswordFormProps {
@@ -20,7 +20,7 @@ export default function ChangePasswordForm({
   const { showSuccess, showError } = useNotification();
 
   const changePasswordMutation = useMutation({
-    mutationFn: changePassword,
+    mutationFn: profileService.changePassword,
 
     onSuccess: () => {
       form.reset();

@@ -1,6 +1,7 @@
 import cors from "cors";
 import express, { type Express, type Request, type Response } from "express";
 import morgan from "morgan";
+import path from "path";
 
 import config from "@config/config.js";
 import { setupSwagger } from "@config/swagger.js";
@@ -13,6 +14,7 @@ const app: Express = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 if (config.NODE_ENV === "development") {
   app.use(morgan("dev"));

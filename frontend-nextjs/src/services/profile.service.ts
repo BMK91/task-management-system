@@ -7,13 +7,13 @@ import {
 
 const base_path = "/user";
 
-export const getProfile = async (): Promise<Profile> => {
+const getProfile = async (): Promise<Profile> => {
   const response = await api.get(`${base_path}/profile`);
 
   return response.data.data;
 };
 
-export const updateProfile = async (
+const updateProfile = async (
   payload: UpdateProfilePayload,
 ): Promise<Profile> => {
   const response = await api.put(`${base_path}/profile`, payload);
@@ -21,8 +21,28 @@ export const updateProfile = async (
   return response.data.data;
 };
 
-export const changePassword = async (
+const changePassword = async (
   payload: ChangePasswordPayload,
 ): Promise<void> => {
   await api.put(`${base_path}/change-password`, payload);
+};
+
+const uploadProfilePhoto = async (file: File): Promise<Profile> => {
+  const formData = new FormData();
+  formData.append("photo", file);
+
+  const response = await api.post(`${base_path}/profile/photo`, formData, {
+    headers: {
+      "Content-Type": undefined,
+    },
+  });
+
+  return response.data.data;
+};
+
+export default {
+  getProfile,
+  updateProfile,
+  changePassword,
+  uploadProfilePhoto,
 };
